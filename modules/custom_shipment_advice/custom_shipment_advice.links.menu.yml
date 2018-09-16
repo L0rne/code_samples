@@ -1,0 +1,7 @@
+# Add a link in the "Configuration/System" section of the admin menu.
+custom_shipment_advice.settings:
+  route_name: custom_shipment_advice.settings
+  title: 'Shipment Advice Settings'
+  weight: 0
+  description: "Settings for Shipment Advice emails."
+  parent: system.admin_config_system

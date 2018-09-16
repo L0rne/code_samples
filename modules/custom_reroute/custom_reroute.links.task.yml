@@ -1,0 +1,164 @@
+custom_reroute.pc_edit:
+    title: edit
+    route_name: custom_reroute.pc_edit
+    base_route: custom_reroute.pc_edit
+
+custom_reroute.pc_edit.view:
+    title: view
+    route_name: entity.node.canonical
+    base_route: custom_reroute.pc_edit
+
+custom_reroute.pc_edit.delete:
+    title: delete
+    route_name: custom_reroute.pc_delete
+    base_route: custom_reroute.pc_edit
+
+custom_reroute.pc_note_edit:
+    title: edit
+    route_name: custom_reroute.pc_note_edit
+    base_route: custom_reroute.pc_note_edit
+
+custom_reroute.pc_note_edit.view:
+    title: view
+    route_name: entity.node.canonical
+    base_route: custom_reroute.pc_note_edit
+
+custom_reroute.pc_note_edit.delete:
+    title: delete
+    route_name: custom_reroute.pc_note_delete
+    base_route: custom_reroute.pc_note_edit
+
+custom_reroute.supplier_edit:
+    title: edit
+    route_name: custom_reroute.supplier_edit
+    base_route: custom_reroute.supplier_edit
+
+custom_reroute.supplier_edit.view:
+    title: view
+    route_name: entity.node.canonical
+    base_route: custom_reroute.supplier_edit
+
+custom_reroute.supplier_edit.delete:
+    title: delete
+    route_name: custom_reroute.supplier_delete
+    base_route: custom_reroute.supplier_edit
+
+custom_reroute.shipping_edit:
+    title: edit
+    route_name: custom_reroute.shipping_edit
+    base_route: custom_reroute.shipping_edit
+
+custom_reroute.shipping_edit.view:
+    title: view
+    route_name: entity.node.canonical
+    base_route: custom_reroute.shipping_edit
+
+custom_reroute.shipping_edit.delete:
+    title: delete
+    route_name: custom_reroute.shipping_delete
+    base_route: custom_reroute.shipping_edit
+
+custom_reroute.container_edit:
+    title: edit
+    route_name: custom_reroute.container_edit
+    base_route: custom_reroute.container_edit
+
+custom_reroute.container_edit.view:
+    title: view
+    route_name: entity.node.canonical
+    base_route: custom_reroute.container_edit
+
+custom_reroute.container_edit.delete:
+    title: delete
+    route_name: custom_reroute.container_delete
+    base_route: custom_reroute.container_edit
+
+custom_reroute.sc_edit:
+    title: edit
+    route_name: custom_reroute.sc_edit
+    base_route: custom_reroute.sc_edit
+
+custom_reroute.sc_edit.view:
+    title: view
+    route_name: entity.node.canonical
+    base_route: custom_reroute.sc_edit
+
+custom_reroute.sc_edit.delete:
+    title: delete
+    route_name: custom_reroute.sc_delete
+    base_route: custom_reroute.sc_edit
+
+custom_reroute.release_edit:
+    title: edit
+    route_name: custom_reroute.release_edit
+    base_route: custom_reroute.release_edit
+
+custom_reroute.release_edit.view:
+    title: view
+    route_name: entity.node.canonical
+    base_route: custom_reroute.release_edit
+
+custom_reroute.release_edit.delete:
+    title: delete
+    route_name: custom_reroute.release_delete
+    base_route: custom_reroute.release_edit
+
+custom_reroute.invoice_edit:
+    title: edit
+    route_name: custom_reroute.invoice_edit
+    base_route: custom_reroute.invoice_edit
+
+custom_reroute.invoice_edit.view:
+    title: view
+    route_name: entity.node.canonical
+    base_route: custom_reroute.invoice_edit
+
+custom_reroute.invoice_edit.delete:
+    title: delete
+    route_name: custom_reroute.invoice_delete
+    base_route: custom_reroute.invoice_edit
+
+custom_reroute.sc_note_edit:
+    title: edit
+    route_name: custom_reroute.sc_note_edit
+    base_route: custom_reroute.sc_note_edit
+
+custom_reroute.sc_note_edit.view:
+    title: view
+    route_name: entity.node.canonical
+    base_route: custom_reroute.sc_note_edit
+
+custom_reroute.sc_note_edit.delete:
+    title: delete
+    route_name: custom_reroute.sc_note_delete
+    base_route: custom_reroute.sc_note_edit
+
+custom_reroute.customer_edit:
+    title: edit
+    route_name: custom_reroute.customer_edit
+    base_route: custom_reroute.customer_edit
+
+custom_reroute.customer_edit.view:
+    title: view
+    route_name: entity.node.canonical
+    base_route: custom_reroute.customer_edit
+
+custom_reroute.customer_edit.delete:
+    title: delete
+    route_name: custom_reroute.customer_delete
+    base_route: custom_reroute.customer_edit
+
+custom_reroute.trucker_edit:
+    title: edit
+    route_name: custom_reroute.trucker_edit
+    base_route: custom_reroute.trucker_edit
+
+custom_reroute.trucker_edit.view:
+    title: view
+    route_name: entity.node.canonical
+    base_route: custom_reroute.trucker_edit
+
+custom_reroute.trucker_edit.delete:
+    title: delete
+    route_name: custom_reroute.trucker_delete
+    base_route: custom_reroute.trucker_edit

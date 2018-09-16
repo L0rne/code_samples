@@ -1,0 +1,296 @@
+custom_reroute.pc_add:
+  path: '/purchasing/contracts/add'
+  defaults:
+    _controller: '\Drupal\node\Controller\NodeController::add'
+    _title: 'Create Purchase Contract'
+    node_type: 'purchase_contract'
+  requirements:
+    _node_add_access: 'node:purchase_contract'
+
+custom_reroute.pc_edit:
+  path: '/purchasing/contracts/{node}/edit'
+  defaults:
+    _entity_form: 'node.edit'
+  requirements:
+    node: \d+
+    _entity_access: 'node.update'
+    _content_type:  'purchase_contract'
+
+custom_reroute.pc_delete:
+  path: '/purchasing/contracts/{node}/delete'
+  defaults:
+    _entity_form: 'node.delete'
+  requirements:
+    node: \d+
+    _entity_access: 'node.delete'
+    _content_type:  'purchase_contract'
+
+custom_reroute.pc_note_add:
+  path: '/purchasing/notes/add'
+  defaults:
+    _controller: '\Drupal\node\Controller\NodeController::add'
+    _title: 'Create Purchasing Debit/Credit Note'
+    node_type: 'memo'
+  requirements:
+    _node_add_access: 'node:memo'
+
+custom_reroute.pc_note_edit:
+  path: '/purchasing/notes/{node}/edit'
+  defaults:
+    _entity_form: 'node.edit'
+  requirements:
+    node: \d+
+    _entity_access: 'node.update'
+    _content_type:  'memo'
+
+custom_reroute.pc_note_delete:
+  path: '/purchasing/notes/{node}/delete'
+  defaults:
+    _entity_form: 'node.delete'
+  requirements:
+    node: \d+
+    _entity_access: 'node.delete'
+    _content_type:  'memo'
+
+custom_reroute.supplier_add:
+  path: '/purchasing/suppliers/add'
+  defaults:
+    _controller: '\Drupal\node\Controller\NodeController::add'
+    _title: 'Create Supplier'
+    node_type: 'supplier'
+  requirements:
+    _node_add_access: 'node:supplier'
+
+custom_reroute.supplier_edit:
+  path: '/purchasing/suppliers/{node}/edit'
+  defaults:
+    _entity_form: 'node.edit'
+  requirements:
+    node: \d+
+    _entity_access: 'node.update'
+    _content_type:  'supplier'
+
+custom_reroute.supplier_delete:
+  path: '/purchasing/suppliers/{node}/delete'
+  defaults:
+    _entity_form: 'node.delete'
+  requirements:
+    node: \d+
+    _entity_access: 'node.delete'
+    _content_type:  'supplier'
+
+custom_reroute.shipping_add:
+  path: '/shipping/add'
+  defaults:
+    _controller: '\Drupal\node\Controller\NodeController::add'
+    _title: 'Create Shipment'
+    node_type: 'shipment'
+  requirements:
+    _node_add_access: 'node:shipment'
+
+custom_reroute.shipping_edit:
+  path: '/shipping/{node}/edit'
+  defaults:
+    _entity_form: 'node.edit'
+  requirements:
+    node: \d+
+    _entity_access: 'node.update'
+    _content_type:  'shipment'
+
+custom_reroute.shipping_delete:
+  path: '/shipping/{node}/delete'
+  defaults:
+    _entity_form: 'node.delete'
+  requirements:
+    node: \d+
+    _entity_access: 'node.delete'
+    _content_type:  'shipment'
+
+custom_reroute.container_add:
+  path: '/inventory/add'
+  defaults:
+    _controller: '\Drupal\node\Controller\NodeController::add'
+    _title: 'Create Container'
+    node_type: 'container'
+  requirements:
+    _node_add_access: 'node:container'
+
+custom_reroute.container_edit:
+  path: '/inventory/{node}/edit'
+  defaults:
+    _entity_form: 'node.edit'
+  requirements:
+    node: \d+
+    _entity_access: 'node.update'
+    _content_type:  'container'
+
+custom_reroute.container_delete:
+  path: '/inventory/{node}/delete'
+  defaults:
+    _entity_form: 'node.delete'
+  requirements:
+    node: \d+
+    _entity_access: 'node.delete'
+    _content_type:  'container'
+
+custom_reroute.sc_add:
+  path: '/sales/contracts/add'
+  defaults:
+    _controller: '\Drupal\node\Controller\NodeController::add'
+    _title: 'Create Sales Contract'
+    node_type: 'sales_contract'
+  requirements:
+    _node_add_access: 'node:sales_contract'
+
+custom_reroute.sc_edit:
+  path: '/sales/contracts/{node}/edit'
+  defaults:
+    _entity_form: 'node.edit'
+  requirements:
+    node: \d+
+    _entity_access: 'node.update'
+    _content_type:  'sales_contract'
+
+custom_reroute.sc_delete:
+  path: '/sales/contracts/{node}/delete'
+  defaults:
+    _entity_form: 'node.delete'
+  requirements:
+    node: \d+
+    _entity_access: 'node.delete'
+    _content_type:  'sales_contract'
+
+custom_reroute.release_add:
+  path: '/sales/releases/add'
+  defaults:
+    _controller: '\Drupal\node\Controller\NodeController::add'
+    _title: 'Create Release'
+    node_type: 'release'
+  requirements:
+    _node_add_access: 'node:release'
+
+custom_reroute.release_edit:
+  path: '/sales/releases/{node}/edit'
+  defaults:
+    _entity_form: 'node.edit'
+  requirements:
+    node: \d+
+    _entity_access: 'node.update'
+    _content_type:  'release'
+
+custom_reroute.release_delete:
+  path: '/sales/releases/{node}/delete'
+  defaults:
+    _entity_form: 'node.delete'
+  requirements:
+    node: \d+
+    _entity_access: 'node.delete'
+    _content_type:  'release'
+
+custom_reroute.invoice_add:
+  path: '/sales/invoicing/add'
+  defaults:
+    _controller: '\Drupal\node\Controller\NodeController::add'
+    _title: 'Create Invoice'
+    node_type: 'invoice'
+  requirements:
+    _node_add_access: 'node:invoice'
+
+custom_reroute.invoice_edit:
+  path: '/sales/invoicing/{node}/edit'
+  defaults:
+    _entity_form: 'node.edit'
+  requirements:
+    node: \d+
+    _entity_access: 'node.update'
+    _content_type:  'invoice'
+
+custom_reroute.invoice_delete:
+  path: '/sales/invoicing/{node}/delete'
+  defaults:
+    _entity_form: 'node.delete'
+  requirements:
+    node: \d+
+    _entity_access: 'node.delete'
+    _content_type:  'invoice'
+
+custom_reroute.sc_note_add:
+  path: '/sales/notes/add'
+  defaults:
+    _controller: '\Drupal\node\Controller\NodeController::add'
+    _title: 'Create Sales Debit/Credit Note'
+    node_type: 'memo'
+  requirements:
+    _node_add_access: 'node:memo'
+
+custom_reroute.sc_note_edit:
+  path: '/sales/notes/{node}/edit'
+  defaults:
+    _entity_form: 'node.edit'
+  requirements:
+    node: \d+
+    _entity_access: 'node.update'
+    _content_type:  'memo'
+
+custom_reroute.sc_note_delete:
+  path: '/sales/notes/{node}/delete'
+  defaults:
+    _entity_form: 'node.delete'
+  requirements:
+    node: \d+
+    _entity_access: 'node.delete'
+    _content_type:  'memo'
+
+custom_reroute.customer_add:
+  path: '/sales/customers/add'
+  defaults:
+    _controller: '\Drupal\node\Controller\NodeController::add'
+    _title: 'Create Customer'
+    node_type: 'customer'
+  requirements:
+    _node_add_access: 'node:customer'
+
+custom_reroute.customer_edit:
+  path: '/sales/customers/{node}/edit'
+  defaults:
+    _entity_form: 'node.edit'
+  requirements:
+    node: \d+
+    _entity_access: 'node.update'
+    _content_type:  'customer'
+
+custom_reroute.customer_delete:
+  path: '/sales/customers/{node}/delete'
+  defaults:
+    _entity_form: 'node.delete'
+  requirements:
+    node: \d+
+    _entity_access: 'node.delete'
+    _content_type:  'customer'
+
+custom_reroute.trucker_add:
+  path: '/sales/truckers/add'
+  defaults:
+    _controller: '\Drupal\node\Controller\NodeController::add'
+    _title: 'Create Trucker'
+    node_type: 'trucker'
+  requirements:
+    _node_add_access: 'node:trucker'
+
+custom_reroute.trucker_edit:
+  path: '/sales/truckers/{node}/edit'
+  defaults:
+    _entity_form: 'node.edit'
+  requirements:
+    node: \d+
+    _entity_access: 'node.update'
+    _content_type:  'trucker'
+
+custom_reroute.trucker_delete:
+  path: '/sales/truckers/{node}/delete'
+  defaults:
+    _entity_form: 'node.delete'
+  requirements:
+    node: \d+
+    _entity_access: 'node.delete'
+    _content_type:  'trucker'

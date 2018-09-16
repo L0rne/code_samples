@@ -1,0 +1,94 @@
+<?php
+
+/**
+ * @file
+ * custom Reroute.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
+use Drupal\views\ViewExecutable;
+use Drupal\views\Plugin\views\cache\CachePluginBase;
+
+/**
+ * Implements hook_menu_local_tasks_alter()
+ *
+ * Adds custom local menu tabs to nodes and views.
+ *
+ * @see https://api.drupal.org/api/drupal/core!lib!Drupal!Core!Menu!menu.api.php/function/hook_menu_local_tasks_alter/8.2.x
+ */
+function custom_reroute_menu_local_tasks_alter(&$data, $route_name) {
+
+  $route_list = array(
+    "custom_reroute.pc_edit",
+    "custom_reroute.pc_note_edit",
+    "custom_reroute.supplier_edit",
+    "custom_reroute.shipping_edit",
+    "custom_reroute.container_edit",
+    "custom_reroute.sc_edit",
+    "custom_reroute.release_edit",
+    "custom_reroute.invoice_edit",
+    "custom_reroute.sc_note_edit",
+    "custom_reroute.customer_edit",
+    "custom_reroute.trucker_edit"
+  );
+
+  foreach ($route_list as $route) {
+    $view_route   = $route . ".view";
+    $delete_route = $route . ".delete";
+
+    if (! empty($data['tabs'][0][$view_route])) {
+      $data['tabs'][0][$view_route]['#link']['localized_options']['attributes']['class'][] = 'local-task-view tooltip';
+      $data['tabs'][0][$view_route]['#link']['localized_options']['attributes']['title'] = 'View';
+    }
+
+    if (! empty($data['tabs'][0][$delete_route])) {
+      $data['tabs'][0][$delete_route]['#link']['localized_options']['attributes']['class'][] = 'local-task-delete tooltip';
+      $data['tabs'][0][$delete_route]['#link']['localized_options']['attributes']['title']   = 'Delete';
+    }
+
+    if (! empty($data['tabs'][0][$route])) {
+      $data['tabs'][0][$route]['#link']['localized_options']['attributes']['class'][] = 'local-task-edit tooltip';
+      $data['tabs'][0][$route]['#link']['localized_options']['attributes']['title']   = 'Edit';
+    }
+  }
+
+  switch ($route_name) {
+    case 'entity.node.canonical' :
+      // Get the node from the route parameter.
+      $node = \Drupal::routeMatch()->getParameter('node');
+      if ($node instanceof \Drupal\node\NodeInterface) {
+        $node_type = $node->getType();
+      }
+
+      // Remove original tabs from some content types
+      // because they are replaced in custom_reroute.
+      $replace_types = [
+        "purchase_contract",
+        "memo",
+        "supplier",
+        "shipment",
+        "container",
+        "sales_contract",
+        "release",
+        "invoice",
+        "customer",
+        "trucker"
+      ];
+
+      if (in_array($node_type, $replace_types)) {
+        unset($data['tabs'][0]['entity.node.edit_form']);
+        unset($data['tabs'][0]['entity.node.delete_form']);
+      }
+      $is_sales = strpos(\Drupal::request()->getRequestUri(), "sales");
+      if ($node_type == 'memo' && $is_sales) {
+        unset($data['tabs'][0]['custom_reroute.pc_note_edit']);
+        unset($data['tabs'][0]['custom_reroute.pc_note_edit.delete']);
+      }
+      elseif ($node_type == 'memo' && !$is_sales) {
+        unset($data['tabs'][0]['custom_reroute.sc_note_edit']);
+        unset($data['tabs'][0]['custom_reroute.sc_note_edit.delete']);
+      }
+      break;
+  }
+}

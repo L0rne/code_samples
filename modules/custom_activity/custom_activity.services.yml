@@ -1,0 +1,3 @@
+services:
+  custom_activity.log_activity:
+    class: Drupal\custom_activity\ActivityServices

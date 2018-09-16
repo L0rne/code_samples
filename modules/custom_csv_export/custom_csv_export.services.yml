@@ -1,0 +1,6 @@
+services:
+  custom_csv_export.customcsvsubscriber:
+    class: Drupal\custom_csv_export\EventSubscriber\CustomCsvSubscriber
+    arguments: ['@current_route_match']
+    tags:
+      - { name: event_subscriber }

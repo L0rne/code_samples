@@ -1,0 +1,10 @@
+
+custom_inline_edit.open_modal_form:
+  path: '/inline-edit/modal-form/{nid}/{field}'
+  defaults:
+    _title: 'Modal Form'
+    _controller: '\Drupal\custom_inline_edit\Controller\ModalFormController::openModalForm'
+  requirements:
+    _permission: 'access content'
+  options:
+    _admin_route: TRUE

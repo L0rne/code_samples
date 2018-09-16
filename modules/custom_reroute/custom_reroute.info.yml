@@ -1,0 +1,7 @@
+name: Custom Reroute
+type: module
+description: Makes administration URLs more user-friendly.
+package: Custom
+version: 8.x-1.0
+core: 8.x
+project: Custom

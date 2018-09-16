@@ -1,0 +1,7 @@
+name: Custom Shipment Advice Notification
+type: module
+description: Automatic Shipment Advice Notification.
+package: Custom
+version: 8.x-1.0
+core: 8.x
+project: Custom

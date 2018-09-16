@@ -1,0 +1,63 @@
+custom_csv_export.purchasing:
+  path: '/purchasing/{node_type}/export'
+  defaults:
+    _form: '\Drupal\custom_csv_export\Form\ExportForm'
+    _title: 'CSV Export'
+  requirements:
+    _permission: 'access content'
+
+custom_csv_export.purchasing_archive:
+  path: '/purchasing/{node_type}/archive/export'
+  defaults:
+    _form: '\Drupal\custom_csv_export\Form\ExportForm'
+    _title: 'CSV Export'
+  requirements:
+    _permission: 'access content'
+
+custom_csv_export.sales:
+  path: '/sales/{node_type}/export'
+  defaults:
+    _form: '\Drupal\custom_csv_export\Form\ExportForm'
+    _title: 'CSV Export'
+  requirements:
+    _permission: 'access content'
+
+custom_csv_export.sales_archive:
+  path: '/sales/{node_type}/archive/export'
+  defaults:
+    _form: '\Drupal\custom_csv_export\Form\ExportForm'
+    _title: 'CSV Export'
+  requirements:
+    _permission: 'access content'
+
+custom_csv_export.shipping:
+  path: '/shipping/export'
+  defaults:
+    _form: '\Drupal\custom_csv_export\Form\ExportForm'
+    _title: 'CSV Export'
+  requirements:
+    _permission: 'access content'
+
+custom_csv_export.shipping_archive:
+  path: '/shipping/archive/export'
+  defaults:
+    _form: '\Drupal\custom_csv_export\Form\ExportForm'
+    _title: 'CSV Export'
+  requirements:
+    _permission: 'access content'
+
+custom_csv_export.inventory:
+  path: '/inventory/export'
+  defaults:
+    _form: '\Drupal\custom_csv_export\Form\ExportForm'
+    _title: 'CSV Export'
+  requirements:
+    _permission: 'access content'
+
+custom_csv_export.inventory_archive:
+  path: '/inventory/archive/export'
+  defaults:
+    _form: '\Drupal\custom_csv_export\Form\ExportForm'
+    _title: 'CSV Export'
+  requirements:
+    _permission: 'access content'

@@ -1,0 +1,5 @@
+inline_edit_form:
+  version: 0.1
+  css:
+    base:
+      assets/css/custom_inline_edit.css: {}

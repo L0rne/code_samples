@@ -1,0 +1,7 @@
+name: Custom Inline Edit
+type: module
+description: Adds the Inline Edit feature.
+package: Custom
+version: 8.x-1.0
+core: 8.x
+project: Custom

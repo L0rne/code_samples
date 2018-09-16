@@ -1,0 +1,139 @@
+<?php
+
+/**
+ * @file
+ * Preprocess functions for custom Theme.
+ */
+
+use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Cache\CacheableMetadata;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\node\Entity\Node;
+use Drupal\user\Entity\User;
+
+
+/**
+ * Prepares variables for the field.html.twig template.
+ */
+function custom_preprocess_field(&$variables, $hook) {
+  $variables['bundle'] = (empty($variables['element']['#bundle']) ? NULL : $variables['element']['#bundle']);
+
+  $variables['is_editable'] = FALSE;
+  
+  if (\Drupal::moduleHandler()->moduleExists('custom_access')) {
+    $field   = (empty($variables['field_name'])         ? NULL : $variables['field_name']);
+    $account = (empty($variables['user'])               ? NULL : $variables['user']);
+    $entity  = (empty($variables['element']['#object']) ? NULL : $variables['element']['#object']);
+
+    $variables['is_editable'] = custom_access_is_editable_field($field, $account, $entity);
+  }
+
+  if ($variables['is_editable'] && $entity !== NULL) {
+    $variables['inline_edit_form'] = custom_inline_edit_form($entity, $field);
+  }
+}
+
+/**
+ * Preprocess views field.
+ */
+function custom_preprocess_views_view_field(&$variables) {
+  // Get the actual field name.
+  $field = $variables['field']->field;
+
+  $variables['is_editable'] = FALSE;
+
+  if (! empty($variables['field']->relationship)) {
+    $related_field = explode('__field_', $variables['field']->relationship);
+    $field = (empty($related_field[1]) ? NULL : 'field_' . $related_field[1]);
+  }
+
+  if (empty($field) || (stripos($variables['field']->field, 'field_') === FALSE))  { return; }
+  
+  // See if field is editable.
+  $account = (empty($variables['user'])         ? NULL : $variables['user']);
+  $entity  = (empty($variables['row']->_entity) ? NULL : $variables['row']->_entity);
+
+  $variables['is_editable'] = custom_access_is_editable_field($field, $account, $entity);
+  
+  if ($variables['is_editable'] && $entity !== NULL) {
+    $variables['inline_edit_form'] = custom_inline_edit_form($entity, $field, $variables['output']);
+  }
+  
+  // for inline edit
+  $variables['entity_id'] = $entity->id();
+  $variables['field'] = $field;
+}
+
+function custom_inline_edit_form($entity = NULL, $field = NULL, $custom_output = NULL) {
+  
+  $content_type      = $entity->getType();
+  $field_definitions = $entity->getFieldDefinitions();
+  $field_definition = $field_definitions[$field];
+  $field_type       = $field_definition->getType();
+  $value            = !empty($entity->get($field)->value) ? $entity->get($field)->value : NULL;
+  
+  switch ($field_type) {
+    case "entity_reference" :
+      $reference_entity = !empty($entity->get($field)->target_id) ? $entity->get($field)->entity : NULL;
+      $entity_type = !empty($entity->get($field)->target_id) ? $reference_entity->getEntityTypeId() : NULL;
+      $value            = !empty($entity->get($field)->target_id) ? $entity->get($field)->target_id : NULL;
+      
+      switch ($entity_type) {
+        case "taxonomy_term" :
+          $output = $reference_entity->hasField('field_short_name') ? $reference_entity->get('field_short_name')->value : $reference_entity->getName();
+          break;
+        case "node" :
+  
+          $shortname = $reference_entity->hasField('field_short_name') ? $reference_entity->get('field_short_name')->value : NULL;
+          $output = $entity->get($field)->entity->link($shortname);
+
+          break;
+        case "user" :
+          $output = $reference_entity->getAccountName();
+          break;
+        case "file" :
+          $output = $reference_entity->getFilename();
+          break;
+      }
+      
+      break;
+    
+    case "boolean" :
+      $field_settings = $field_definition->getSettings();
+      if (isset($entity->get($field)->value) && $entity->get($field)->value == TRUE) {
+        $output = $field_settings['on_label'];
+      } else {
+        $output = $field_settings['off_label'];
+      }
+      
+      break;
+    
+    case "text_with_summary" :
+      $data   = $entity->get($field)->getValue();
+      $output = [
+        '#type'   => 'processed_text',
+        '#text'   => $data[0]['value'],
+        '#format' => $data[0]['format'],
+      ];
+      
+      break;
+    
+    default :
+      $output = $value;
+    
+  }
+  
+  $output_empty = "-";
+
+  $output = !empty($output) ? $output : $output_empty;
+  
+  $inline_edit_form = [
+    '#theme'     => 'custom_inline_edit_form',
+    '#field'     => $field,
+    '#entity_id' => $entity->id(),
+    '#value'     => $value,
+    '#output'    => $output,
+  ];
+  
+  return $inline_edit_form;
+}

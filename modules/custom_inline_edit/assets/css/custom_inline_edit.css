@@ -1,0 +1,16 @@
+
+.inline-edit-wrapper {
+  width: 100%;
+}
+
+.inline-edit-form {
+  display: none;
+  width: 250px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  border: 1px solid gray;
+  background-color: white;
+  padding: 10px;
+}

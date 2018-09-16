@@ -1,0 +1,68 @@
+{#
+/**
+ * @file
+ * Theme override for a single field in a view.
+ *
+ * Available variables:
+ * - view: The view that the field belongs to.
+ * - field: The field handler that can process the input.
+ * - row: The raw result of the database query that generated this field.
+ * - output: The processed output that will normally be used.
+ *
+ * Added by preprocess functions in custom.theme:
+ * - is_editable: TRUE/FALSE
+ *
+ * When fetching output from the row this construct should be used:
+ * data = row[field.field_alias]
+ *
+ * The above will guarantee that you'll always get the correct data, regardless
+ * of any changes in the aliasing that might happen if the view is modified.
+ *
+ * @see template_preprocess_views_view_field()
+ */
+#}
+
+{% set alert_class = '' %}
+{% set alert_text  = '' %}
+
+{% set container_status = row._entity.field_container_status.value %}
+{% set on_hold = row._entity.field_hold.value %}
+{% set arrival_date = view.field['field_eta'].getValue(row) %}
+
+{% if arrival_date is empty %}
+  {% set expected_arrival = row._entity.field_expected_arrival_year.value ~ '-' ~ "%02d"|format(row._entity.field_expected_arrival_month.value) ~ '-01' %}
+  {% set arrival_date = row._entity.field_expected_arrival_year.value ~ '-' ~ "%02d"|format(row._entity.field_expected_arrival_month.value) ~ '-' ~ expected_arrival|date('t') %}
+{% endif %}
+
+{% if on_hold == '1' %}
+  {% set alert_class = 'alert-danger' %}
+  {% set alert_text = 'Container is on-hold.' %}
+{% elseif arrival_date is not empty %}
+  {% if (container_status|lower == 'unshipped') or (container_status|lower == 'in-transit') %}
+    {% if "now"|date('Y-m-d') > arrival_date %}
+      {% set alert_class = 'alert-danger' %}
+      {% set alert_text = 'Expected arrival has past; container has not arrived.' %}
+    {% elseif "now + 10 days"|date('Y-m-d') >= arrival_date %}
+      {% set alert_class = 'alert-warning' %}
+      {% set alert_text = 'Current date is within 10 days of arrival; container has not arrived.' %}
+    {% endif %}
+  {% endif %}
+{% endif %}
+
+{% if is_editable %}
+
+  {{ inline_edit_form }}
+
+  {% if alert_class is not empty %}
+    <i class="tooltip fa {{ alert_class }} after" title="{{ alert_text }}"></i>
+  {% endif %}
+
+{% else %}
+
+  <a href="{{ path('entity.node.canonical', {'node': row.nid}) }}">{{ row._entity.field_container_id.value }}</a>
+  {% if alert_class is not empty %}
+    <i class="tooltip fa {{ alert_class }} after" title="{{ alert_text }}"></i>
+  {% endif %}
+
+{% endif %}
+

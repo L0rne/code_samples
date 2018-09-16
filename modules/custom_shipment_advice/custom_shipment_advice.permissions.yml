@@ -1,0 +1,3 @@
+administer custom_shipment_advice:
+  title: 'Manage Settings for Shipment Advice Notification'
+  description: 'Allows users to access the administration page for Shipment Advice Notification.'

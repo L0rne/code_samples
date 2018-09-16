@@ -1,0 +1,330 @@
+# List of fields for which changes are tracked in the Activity Feed.
+
+content_types:
+  # Container
+  container:
+    fields:
+      body:
+      field_actual_color:
+        options:
+          prefix:
+          suffix: mm
+      field_actual_moisture:
+      field_color:
+      field_container_id:
+#      field_container_status:
+#      field_content_version:
+#      field_customer:
+      field_customer_po:
+      field_customs_status:
+      field_destination:
+      field_drums:
+      field_expected_arrival_month:
+      field_expected_arrival_year:
+      field_expected_departure_month:
+      field_expected_departure_year:
+      field_fda_status:
+      field_files:
+#      field_floral_source:
+#      field_grade:
+      field_gross_weight:
+      field_hold:
+#      field_in_inventory:
+      field_inventory_date:
+#      field_invoice:
+      field_net_weight:
+#      field_origin:
+#      field_product:
+#      field_purchase_contract:
+#      field_release:
+#      field_sales_contract:
+#      field_sc_sequence:
+#      field_shipment:
+#      field_supplier:
+      field_supplier_invoice:
+      field_supplier_lot_number:
+      field_ts_seal_number:
+      field_warehouse:
+      field_warehouse_date_in:
+      field_warehouse_date_out:
+
+  customer:
+    fields:
+      body:
+      field_approved:
+      field_company_address:
+      field_company_name:
+      field_contact:
+#      field_content_version:
+      field_delivery_locations:
+      field_email:
+      field_files:
+      field_phone:
+      field_port:
+      field_sc_payment_terms:
+      field_sc_payment_terms_other:
+      field_short_name:
+      field_true_source:
+      field_users:
+    combine:
+      delivery_terms:
+        label: Delivery Terms
+        combine_fields:
+          field_delivery_terms:
+            name: field_delivery_terms
+          field_delivery_locations:
+            options:
+              prefix: ": "
+              match_field: field_delivery_terms
+              match_value: DLVD
+          field_port:
+            options:
+              prefix: ": "
+              match_field: field_delivery_terms
+              match_value: EX/DOCK
+
+
+  memo:
+    fields:
+      body:
+      field_additional_details:
+#      field_content_version:
+      field_counter_party_type:
+      field_customer:
+      field_date:
+#      field_memo_id:
+      field_memo_line_items:
+#      field_memo_total:
+      field_memo_type:
+#      field_status:
+      field_supplier:
+
+
+  file:
+    fields:
+      body:
+#      field_content_version:
+      field_file:
+      field_file_status:
+      field_file_type:
+
+
+  invoice:
+    fields:
+      body:
+      field_additional_details:
+#      field_content_version:
+#      field_customer:
+      field_date:
+#      field_drums:
+#      field_invoice_id:
+#      field_invoice_total:
+#      field_legacy_id:
+#      field_sales_contract:
+#      field_status:
+
+
+
+  release:
+    fields:
+      body:
+      field_additional_details:
+#      field_content_version:
+      field_customer:
+      field_date:
+#      field_legacy_id:
+#      field_release_id:
+#      field_sales_contract:
+#      field_status:
+      field_trucker:
+      field_warehouse:
+
+
+  shipment:
+    fields:
+      body:
+      field_bill_of_lading_id:
+#      field_content_version:
+      field_date:
+      field_destination:
+      field_doc_type:
+      field_eta:
+      field_etd:
+      field_files:
+#      field_in_inventory:
+#      field_legacy_id:
+#      field_shipment_id:
+#      field_status:
+#      field_supplier:
+      field_vessel:
+      field_voyage:
+
+
+  supplier:
+    fields:
+      body:
+      field_approved:
+      field_company_address:
+      field_company_name:
+      field_contact:
+#      field_content_version:
+      field_delivery_location:
+      field_destination:
+      field_doc_type:
+      field_email:
+      field_fda_registration:
+      field_files:
+      field_grade:
+      field_origin:
+      field_pc_payment_terms:
+      field_pc_payment_terms_other:
+      field_port_of_origin:
+      field_phone:
+      field_short_name:
+      field_true_source:
+      field_users:
+    combine:
+      shipping_terms:
+        label: Shipping Terms
+        combine_fields:
+          field_shipping_terms:
+          field_port_of_origin:
+            options:
+              prefix: ": "
+              match_field: field_shipping_terms
+              match_value: FOB
+          field_delivery_location:
+            options:
+              prefix: ": "
+              match_field: field_shipping_terms
+              match_value: DLVD
+          field_destination:
+            options:
+              prefix: ": "
+              match_field: field_shipping_terms
+              match_value: C&F
+
+
+
+  trucker:
+    fields:
+      body:
+      field_company_name:
+      field_contact:
+        name: field_contact
+#      field_content_version:
+      field_email:
+      field_phone:
+      field_short_name:
+
+
+  # Purchase Contract
+  purchase_contract:
+    fields:
+      body:
+      field_additional_details:
+#      field_allocated_containers:
+      field_color:
+#      field_content_version:
+      field_date:
+      field_delivery_location:
+      field_destination:
+      field_floral_source:
+      field_grade:
+#      field_legacy_id:
+      field_non_gmo:
+#      field_open_containers:
+      field_origin:
+      field_pc_payment_terms:
+      field_pc_payment_terms_other:
+#      field_pc_id:
+#      field_pc_status:
+      field_position:
+      field_port_of_origin:
+      field_quantity:
+#      field_show_shipping_marks:
+#      field_supplier:
+      field_true_source:
+    combine:
+      price:
+        label: Currency/Price/Pricing Unit
+        combine_fields:
+          field_currency:
+          field_price:
+            options:
+              prefix: " "
+          field_pricing_unit:
+            options:
+              prefix: " /"
+      shipping_terms:
+        label: Shipping Terms
+        combine_fields:
+          field_shipping_terms:
+          field_port_of_origin:
+            options:
+              prefix: ": "
+              match_field: field_shipping_terms
+              match_value: FOB
+          field_delivery_location:
+            options:
+              prefix: ": "
+              match_field: field_shipping_terms
+              match_value: DLVD
+          field_destination:
+            options:
+              prefix: ": "
+              match_field: field_shipping_terms
+              match_value: C&F
+
+
+
+  # Sales Contract
+  sales_contract:
+    fields:
+      body:
+      field_additional_details:
+      field_color:
+#      field_sc_container_sequence:
+#      field_content_version:
+      field_customer:
+      field_date:
+      field_delivery_location:
+      field_delivery_location_address:
+      field_floral_source:
+      field_grade:
+#      field_legacy_id:
+      field_non_gmo:
+      field_origin:
+      field_sc_payment_terms:
+      field_sc_payment_terms_other:
+      field_port:
+      field_position:
+      field_purchase_order:
+      field_quantity:
+#      field_remaining_balance:
+#      field_sc_id:
+#      field_sc_status:
+      field_true_source:
+#      field_sequential_po:
+    combine:
+      price:
+        label: Price/Pricing Unit
+        combine_fields:
+          field_price:
+          field_pricing_unit:
+            options:
+              prefix: " /"
+      delivery_terms:
+        label: Delivery Terms
+        combine_fields:
+          field_delivery_terms:
+          field_delivery_location:
+            options:
+              prefix: ": "
+              match_field: field_delivery_terms
+              match_value: DLVD
+          field_port:
+            options:
+              prefix: ": "
+              match_field: field_delivery_terms
+              match_value: EX/DOCK

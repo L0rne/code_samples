@@ -1,0 +1,8 @@
+
+custom_shipment_advice.settings:
+  path: '/settings/shipment-advice'
+  defaults:
+    _form: '\Drupal\custom_shipment_advice\Form\customShipmentAdviceSettings'
+    _title: 'Shipment Advice Settings'
+  requirements:
+    _permission: 'administer custom_shipment_advice'

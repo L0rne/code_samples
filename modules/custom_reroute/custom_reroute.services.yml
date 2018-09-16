@@ -1,0 +1,5 @@
+services:
+  custom_reroute.content_type_access_checker:
+    class: Drupal\custom_reroute\Access\ContentTypeAccessCheck
+    tags:
+      - { name: access_check, applies_to: _content_type }

@@ -1,0 +1,985 @@
+<?php
+
+/**
+ * @file
+ * custom Activity.
+ */
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\field_collection\Entity\FieldCollectionItem;
+use Drupal\node\Entity\Node;
+use Symfony\Component\Yaml\Yaml;
+
+/**
+ * Implements HOOK_node_insert().
+ */
+function custom_activity_node_insert($node) {
+
+  $tempstore       = \Drupal::service('user.private_tempstore')->get('custom_activity');
+  $activity_bypass = $tempstore->get('activity_bypass');
+
+  if ($activity_bypass) {
+    return;
+  }
+
+  $node_type = $node->getType();
+
+  switch ($node_type) {
+    case 'purchase_contract' :
+      // Activity: PC created.
+      // Log activity for this action in custom_activity.
+      $activity = \Drupal::service('custom_activity.log_activity');
+      $options  = [
+        "count" => $node->get('field_quantity')->value,
+        "node"  => $node,
+      ];
+      $activity->log_activity('PcCreated', $options);
+      break;
+
+    case 'memo' :
+      // Activity: Memo created.
+      // Log activity for this action in custom_activity.
+      $activity = \Drupal::service('custom_activity.log_activity');
+      $options  = ["node" => $node];
+      $activity->log_activity('MemoCreated', $options);
+      break;
+
+    case 'sales_contract' :
+      // Activity: SC created.
+      // Log activity for this action in custom_activity.
+      $activity = \Drupal::service('custom_activity.log_activity');
+      $options  = [
+        "count" => $node->get('field_quantity')->value,
+        "node"  => $node,
+      ];
+      $activity->log_activity('ScCreated', $options);
+      break;
+  }
+}
+
+
+/**
+ * Implements HOOK_node_update().
+ */
+function custom_activity_node_update($node) {
+
+  $tempstore       = \Drupal::service('user.private_tempstore')->get('custom_activity');
+  $activity_bypass = $tempstore->get('activity_bypass');
+
+  if ($activity_bypass) {
+    return;
+  }
+
+  // Get changed field collection values.
+  $changed_fields_store = $tempstore->get('changed_fields');
+
+  // Reset for next time.
+  $tempstore->set('changed_fields', NULL);
+
+  // Log node field edits.
+  // Fetch the list fields to log from the config file.
+  $active_fields_config = Yaml::parse(file_get_contents(drupal_get_path('module', 'custom_activity').'/custom_activity.active_fields.yml'));
+
+  $node_type = $node->getType();
+
+  if (isset($active_fields_config['content_types'][$node_type])) {
+    $node_type_data    = $active_fields_config['content_types'][$node_type];
+    $fields            = $node_type_data['fields'];
+    $field_definitions = $node->getFieldDefinitions();
+
+    $changed_fields = [];
+
+    foreach ($fields as $field_name => $field_data) {
+      $field_definition = $field_definitions[$field_name];
+      $field_settings   = $field_definition->getSettings();
+      $field_prefix     = (isset($field_settings['prefix']) ? $field_settings['prefix'] : "");
+      $field_suffix     = (isset($field_settings['suffix']) ? $field_settings['suffix'] : "");
+      $field_label      = $field_definition->getLabel();
+      $field_type       = $field_definition->getType();
+      $old_values       = (!$node->original->get($field_name)->isEmpty ? $node->original->get($field_name)->getValue() : NULL);
+      $new_values       = (!$node->get($field_name)->isEmpty           ? $node->get($field_name)->getValue()           : NULL);
+      $field_options    = (isset($field_data['options'])               ? $field_data['options']                        : NULL);
+
+      // Get field options set in custom_activity.active_fields.yml.
+      $option_prefix = (isset($field_options['prefix']) ? $field_options['prefix'] : "");
+      $option_suffix = (isset($field_options['suffix']) ? $field_options['suffix'] : "");
+
+      $prefix = $option_prefix . $field_prefix;
+      $suffix = $field_suffix . $option_suffix;
+
+      $old_value_string = "";
+      $new_value_string = "";
+
+      switch ($field_type) {
+        case 'string' :
+          if ($new_values != $old_values) {
+            if ($old_values) {
+              foreach ($old_values as $old_value) {
+                $old_value_string .= (isset($old_value['value']) ? "{$prefix}{$old_value['value']}{$suffix}" . '<br />' : '');
+              }
+            } else {
+              $old_value_string .= "NONE<br />";
+            }
+
+            if ($new_values) {
+              foreach ($new_values as $new_value) {
+                $new_value_string .= (isset($new_value['value']) ? "{$prefix}{$new_value['value']}{$suffix}" . '<br />' : '');
+              }
+            } else {
+              $new_value_string .= "NONE<br />";
+            }
+          }
+          break;
+
+        case 'boolean' :
+          if ($new_values != $old_values) {
+            $field_settings = $field_definition->getSettings();
+
+            if ($old_values) {
+              if (isset($old_values[0]['value']) && ($old_values[0]['value'] == TRUE)) {
+                $old_value_string = "{$field_settings['on_label']}<br />";
+              } else {
+                $old_value_string = "{$field_settings['off_label']}<br />";
+              }
+            } else {
+              $old_value_string = "NONE<br />";
+            }
+
+            if ($new_values) {
+              if (isset($new_values[0]['value']) && ($new_values[0]['value'] == TRUE)) {
+                $new_value_string = "{$field_settings['on_label']}<br />";
+              } else {
+                $new_value_string = "{$field_settings['off_label']}<br />";
+              }
+            } else {
+              $new_value_string = "NONE<br />";
+            }
+          }
+          break;
+
+        case 'entity_reference' :
+        case 'file' :
+          // Change $new_value array to match the format of $old_values.
+          if ($field_name == "field_files") {
+            $new = [];
+            foreach ($new_values as $value) {
+              $new[] = ['target_id' => (isset($value['target_id']) ? $value['target_id'] : NULL)];
+            }
+            $new_values = $new;
+          }
+
+          if ($field_name == "field_file") {
+            $new = [];
+            foreach ($new_values as $value) {
+              $new[] = [
+                'target_id'   => (isset($value['target_id'])   ? $value['target_id']   : NULL),
+                'display'     => (isset($value['display'])     ? $value['display']     : NULL),
+                'description' => (isset($value['description']) ? $value['description'] : NULL),
+              ];
+            }
+            $new_values = $new;
+          }
+
+          if ($new_values != $old_values) {
+            switch ($field_name) {
+              case "field_files" :
+                // This is an entity ref with specific needs.
+                $file_nodes = [];
+                $count      = 0;
+
+                if ($old_values) {
+                  foreach ($old_values as $file) {
+                    $count++;
+                    $file_id = $file['target_id'];
+
+                    if (isset($file_nodes[$file_id])) {
+                      $file_node = $file_nodes[$file_id];
+                    } else {
+                      $file_node            = Node::load($file_id);
+                      $file_nodes[$file_id] = $file_node;
+                    }
+
+                    $filename = $file_node->getTitle();
+                    $type     = $file_node->get('field_file_type')->entity->getName();
+                    $status   = $file_node->get('field_file_status')->value;
+
+                    $old_value_string .= "File {$count}: Filename: {$filename} Type: {$type} Status: {$status} <br />";
+                  }
+                } else {
+                  $old_value_string .= "NONE<br />";
+                }
+
+                $count = 0;
+
+                if ($new_values) {
+                  foreach ($new_values as $file) {
+                    $count++;
+                    $file_id = $file['target_id'];
+
+                    if (isset($file_nodes[$file_id])) {
+                      $file_node = $file_nodes[$file_id];
+                    } else {
+                      $file_node            = Node::load($file_id);
+                      $file_nodes[$file_id] = $file_node;
+                    }
+
+                    $filename = $file_node->getTitle();
+                    $type     = $file_node->get('field_file_type')->entity->getName();
+                    $status   = $file_node->get('field_file_status')->value;
+
+                    $new_value_string .= "File {$count}: Filename: {$filename} Type: {$type} Status: {$status} <br />";
+                  }
+                } else {
+                  $new_value_string .= "NONE<br />";
+                }
+                break;
+
+              default :
+                // This is a generic case, which handles different entity types.
+                if ($old_values) {
+                  foreach ($node->original->$field_name as $reference) {
+                    $entity_old  = $reference->entity;
+                    $entity_type = $entity_old->getEntityTypeId();
+
+                    switch ($entity_type) {
+                      case "taxonomy_term" :
+                        if ($entity_old->hasField('field_short_name')) {
+                          $old_value_string .= $entity_old->get('field_short_name')->value . "<br />";
+                        }
+                        else {
+                          $old_value_string .= $entity_old->getName() . "<br />";
+                        }
+                        break;
+                      case "node" :
+                        $old_value_string .= $entity_old->getTitle() . "<br />";
+                        break;
+                      case "user" :
+                        $old_value_string .= $entity_old->getAccountName() . "<br />";
+                        break;
+                      case "file" :
+                        $old_value_string .= $entity_old->getFilename() . "<br />";
+                        break;
+                    }
+                  }
+                } else {
+                  $old_value_string = "NONE<br />";
+                }
+
+                if ($new_values) {
+                  foreach ($node->$field_name as $reference) {
+                    $entity_new  = $reference->entity;
+                    $entity_type = $entity_new->getEntityTypeId();
+
+                    switch ($entity_type) {
+                      case "taxonomy_term" :
+                        if ($entity_new->hasField('field_short_name')) {
+                          $new_value_string .= $entity_new->get('field_short_name')->value . "<br />";
+                        } else {
+                          $new_value_string .= $entity_new->getName() . "<br />";
+                        }
+                        break;
+                      case "node" :
+                        $new_value_string .= $entity_new->getTitle() . "<br />";
+                        break;
+                      case "user" :
+                        $new_value_string .= $entity_new->getAccountName() . "<br />";
+                        break;
+                      case "file" :
+                        $new_value_string .= $entity_new->getFilename() . "<br />";
+                        break;
+                    }
+                  }
+                } else {
+                  $new_value_string = "NONE<br />";
+                }
+            }
+          }
+          break;
+
+        case 'field_collection' :
+          // Change $new_value array to match the format of $old_values.
+          if ($new_values) {
+            $new = [];
+
+            foreach ($new_values as $value) {
+              $new[] = [
+                'value'       => (isset($value['value'])       ? $value['value']       : NULL),
+                'revision_id' => (isset($value['revision_id']) ? $value['revision_id'] : NULL),
+              ];
+            }
+
+            $new_values = $new;
+          }
+
+          if (($new_values != $old_values)
+          ||  isset($changed_fields_store[$field_name])) {
+            // For a field collection, we need to gather all field values into a single string.
+            switch ($field_name) {
+              case "field_position" :
+                // This case does not show all fields and has specific formatting.
+                // Build the string for old values.
+                $count = 0;
+
+                // Used to store field collection entities to minimize relaoding.
+                $positions_loaded = [];
+
+                if ($old_values) {
+                  foreach ($old_values as $position) {
+                    $count++;
+                    $entity_id = $position['value'];
+
+                    // Store the item so we don't have to reload it if it's needed later.
+                    if (isset($positions_loaded[$entity_id])) {
+                      $pos_item = $positions_loaded[$entity_id];
+                    } else {
+                      $pos_item = FieldCollectionItem::load($entity_id);
+                      $positions_loaded[$entity_id] = $pos_item;
+                    }
+
+                    // Get a list of valid fields.
+                    $pos_fields          = $pos_item->getFieldDefinitions();
+                    $pos_fields_filtered = [];
+
+                    foreach ($pos_fields as $key => $value) {
+                      if ((strpos($key, 'field_') === 0)
+                      &&  ($key != "field_name")
+                      &&  ($key != "field_position_quota" )) {
+                        $pos_fields_filtered[$key] = $value;
+                      }
+                    }
+
+                    $old_values_store = [];
+
+                    foreach ($pos_fields_filtered as $position_field_name => $position_field) {
+                      // If we have changes stored, use those values.
+                      // If there are no changes, use existing field values.
+                      if (isset($changed_fields_store[$field_name][$entity_id][$position_field_name]['old_value'][0])) {
+                        $old_values_store[$position_field_name] = [
+                          'field_label' => $position_field->getLabel(),
+                          'value'       => $changed_fields_store[$field_name][$entity_id][$position_field_name]['old_value'][0]['value'],
+                        ];
+                      } elseif (isset($pos_item->get($position_field_name)->getValue()[0])) {
+                        $old_values_store[$position_field_name] = [
+                          'field_label' => $position_field->getLabel(),
+                          'value'       => $pos_item->get($position_field_name)->getValue()[0]['value'],
+                        ];
+                      }
+                    }
+
+                    $month_numeric = $old_values_store['field_position_month']['value'];
+                    $month_string  = date("M", mktime(0, 0, 0, $month_numeric, 1));
+
+                    $old_value_string .= "Position {$count}: {$month_string}/{$old_values_store['field_position_year']['value']} - {$old_values_store['field_position_quantity']['value']} FCLs <br />";
+                  }
+                } else {
+                  $old_value_string .= "NONE<br />";
+                }
+
+                $count = 0;
+
+                if ($new_values) {
+                  foreach ($new_values as $position) {
+                    $count++;
+                    $entity_id = $position['value'];
+
+                    // Store the item so we don't have to reload it if it's needed later.
+                    if (isset($positions_loaded[$entity_id])) {
+                      $pos_item = $positions_loaded[$entity_id];
+                    } else {
+                      $pos_item = FieldCollectionItem::load($entity_id);
+                      $positions_loaded[$entity_id] = $pos_item;
+                    }
+
+                    // Get a list of valid fields.
+                    $pos_fields          = $pos_item->getFieldDefinitions();
+                    $pos_fields_filtered = [];
+
+                    foreach ($pos_fields as $key => $value) {
+                      if ((strpos($key, 'field_') === 0)
+                      &&  ($key != "field_name")
+                      &&  ($key != "field_position_quota")) {
+                        $pos_fields_filtered[$key] = $value;
+                      }
+                    }
+
+                    $new_values_store = [];
+
+                    foreach ($pos_fields_filtered as $position_field_name => $position_field) {
+                      // If we have changes stored, use those values.
+                      // If there are no changes, use existing field values.
+                      if (isset($changed_fields_store[$field_name][$entity_id][$position_field_name]['new_value'][0])) {
+                        $new_values_store[$position_field_name] = [
+                          'field_label' => $position_field->getLabel(),
+                          'value'       => $changed_fields_store[$field_name][$entity_id][$position_field_name]['new_value'][0]['value'],
+                        ];
+                      } elseif (isset($pos_item->get($position_field_name)->getValue()[0])) {
+                        $new_values_store[$position_field_name] = [
+                          'field_label' => $position_field->getLabel(),
+                          'value'       => $pos_item->get($position_field_name)->getValue()[0]['value'],
+                        ];
+                      }
+                    }
+
+                    $month_numeric = $new_values_store['field_position_month']['value'];
+                    $month_string  = date("M", mktime(0, 0, 0, $month_numeric, 1));
+
+                    $new_value_string .= "Position {$count}: {$month_string}/{$new_values_store['field_position_year']['value']} - {$new_values_store['field_position_quantity']['value']} FCLs <br />";
+                  }
+                } else {
+                  $new_value_string .= "NONE<br />";
+                }
+                break;
+
+              default :
+                // Generic approach, listing all fields.
+                // Build the string for old values.
+                $count = 0;
+
+                // Used to store field collection entities to minimize relaoding.
+                $items_loaded = [];
+
+                if ($old_values) {
+                  foreach ($old_values as $item) {
+                    $count++;
+                    $entity_id = $item['value'];
+
+                    // Store the item so we don't have to reload it if it is needed later.
+                    if (isset($items_loaded[$entity_id])) {
+                      $old_item = $items_loaded[$entity_id];
+                    } else {
+                      $old_item = FieldCollectionItem::load($entity_id);
+                      $items_loaded[$entity_id] = $old_item;
+                    }
+
+                    // Get a list of valid fields
+                    $old_fields          = $old_item->getFieldDefinitions();
+                    $old_fields_filtered = [];
+
+                    foreach ($old_fields as $key => $value) {
+                      if ((strpos($key, 'field_') === 0)
+                      &&  ($key != "field_name")) {
+                        $old_fields_filtered[$key] = $value;
+                      }
+                    }
+
+                    $old_value_string .= "Item {$count}: ";
+                    $old_field_count = count($old_fields_filtered);
+
+                    foreach ($old_fields_filtered as $item_field_name => $item_field) {
+                      $old_field_count--;
+
+                      // If we have changes stored, use those values.
+                      // If there are no changes, use existing field values.
+                      if (isset($changed_fields_store[$field_name][$entity_id][$item_field_name]['old_value'][0])) {
+                        $old_value_string .= "{$item_field->getLabel()}: {$changed_fields_store[$field_name][$entity_id][$item_field_name]['old_value'][0]['value']} ";
+                      } elseif (isset($old_item->get($item_field_name)->getValue()[0])) {
+                        $old_value_string .= "{$item_field->getLabel()}: {$old_item->get($item_field_name)->getValue()[0]['value']} ";
+                      }
+
+                      if ($old_field_count <= 0) {
+                        $old_value_string .= "<br />";
+                      }
+                    }
+                  }
+                } else {
+                  $old_value_string .= "NONE<br />";
+                }
+
+                if ($new_values) {
+                  $count= 0;
+
+                  foreach ($new_values as $item) {
+                    $count++;
+                    $entity_id = $item['value'];
+
+                    // Store the item so we don't have to reload it if it is needed later.
+                    if (isset($items_loaded[$entity_id])) {
+                      $new_item = $items_loaded[$entity_id];
+                    } else {
+                      $new_item = FieldCollectionItem::load($entity_id);
+                      $items_loaded[$entity_id] = $new_item;
+                    }
+
+                    // Get a list of valid fields
+                    $new_fields          = $new_item->getFieldDefinitions();
+                    $new_fields_filtered = [];
+
+                    foreach ($new_fields as $key => $value) {
+                      if ((strpos($key, 'field_') === 0)
+                      &&  ($key != "field_name")) {
+                        $new_fields_filtered[$key] = $value;
+                      }
+                    }
+
+                    $new_value_string .= "Item {$count}: ";
+                    $new_field_count = count($new_fields_filtered);
+
+                    foreach ($new_fields_filtered as $item_field_name => $item_field) {
+                      $new_field_count--;
+
+                      // If we have changes stored, use those values.
+                      // If there are no changes, use existing field values.
+                      if (isset($changed_fields_store[$field_name][$entity_id][$item_field_name]['new_value'][0])) {
+                        $new_value_string .= "{$item_field->getLabel()}: {$changed_fields_store[$field_name][$entity_id][$item_field_name]['new_value'][0]['value']} ";
+                      } elseif (isset($new_item->get($item_field_name)->getValue()[0])) {
+                        $new_value_string .= "{$item_field->getLabel()}: {$new_item->get($item_field_name)->getValue()[0]['value']} ";
+                      }
+
+                      if ($new_field_count <= 0) {
+                        $new_value_string .= "<br />";
+                      }
+                    }
+                  }
+                } else {
+                  $new_value_string .= "NONE<br />";
+                }
+            }
+          }
+          break;
+
+        case 'decimal' :
+          // Ensure that old/new values have the correct decimal precision.
+          $scale = (isset($field_settings['scale']) ? $field_settings['scale'] : 0);
+          if (isset($old_values[0]['value'])) {
+            $old_values[0]['value'] = number_format((float)$old_values[0]['value'], $scale, '.', '');
+          }
+          if (isset($new_values[0]['value'])) {
+            $new_values[0]['value'] = number_format((float)$new_values[0]['value'], $scale, '.', '');
+          }
+          // Fall through to the "default" case is intentional (no "break").
+
+        default :     //For all unspecified field types
+          $old_count     = (isset($old_values[0]) ? count($old_values[0]) : 0);
+          $new_count     = (isset($new_values[0]) ? count($new_values[0]) : 0);
+          $field_changed = ($old_count != $new_count);
+
+          if (! $field_changed) {
+            $array_keys = (empty($old_values[0]) ? []          : array_keys($old_values[0]));
+            $array_keys = (empty($new_values[0]) ? $array_keys : array_keys($new_values[0]));
+
+            // CKEditor "cleans up" textarea fields by formatting the "source"
+            // using new line characters.  We need to strip whitespace (except
+            // spaces) before the comparison.
+            $whitespace = ["\t", "\n", "\r", "\0", "\x0B"];
+
+            foreach ($array_keys as $key) {
+              $old_value = (isset($old_values[0][$key]) ? $old_values[0][$key] : NULL);
+              $new_value = (isset($new_values[0][$key]) ? $new_values[0][$key] : NULL);
+              $old_value = str_replace($whitespace, '', $old_value);
+              $new_value = str_replace($whitespace, '', $new_value);
+              $field_changed = ($old_value !== $new_value) || $field_changed;
+            }
+          }
+
+          if ($field_changed) {
+            if ($old_values) {
+              foreach ($old_values as $old_value) {
+                if (isset($old_value['value'])) {
+                  $old_value_string .= "{$prefix}{$old_value['value']}{$suffix} <br />";
+                }
+              }
+            } else {
+              $old_value_string .= "NONE<br />";
+            }
+
+            if ($new_values) {
+              foreach ($new_values as $new_value) {
+                if (isset($new_value['value'])) {
+                  $new_value_string .= "{$prefix}{$new_value['value']}{$suffix} <br />";
+                }
+              }
+            } else {
+              $new_value_string .= "NONE<br />";
+            }
+          }
+      }
+
+      if ($old_value_string != $new_value_string) {
+        $changed_fields[$node->id()][$field_name] = [
+          "field_name"  => $field_name,
+          "field_label" => $field_label,
+          "old_value"   => $old_value_string,
+          "new_value"   => $new_value_string,
+        ];
+      }
+    }
+
+    // Format combined fields.
+    if (isset($node_type_data['combine'])) {
+      $combine = $node_type_data['combine'];
+
+      foreach ($combine as $combine_name => $combine_data) {
+        $combine_fields      = $combine_data['combine_fields'];
+        $combine_field_label = $combine_data['label'];
+        $old_value_string    = "";
+        $new_value_string    = "";
+
+        // Gather the data and check for changes as we go.
+        foreach ($combine_fields as $field_name => $field_data) {
+          if (!$node->hasField($field_name))  { continue; }
+
+          $field_definition = $field_definitions[$field_name];
+          $field_settings   = $field_definition->getSettings();
+          $field_prefix     = (isset($field_settings['prefix']) ? $field_settings['prefix'] : "");
+          $field_suffix     = (isset($field_settings['suffix']) ? $field_settings['suffix'] : "");
+          $field_type       = $field_definition->getType();
+          $old_values       = (!$node->original->get($field_name)->isEmpty ? $node->original->get($field_name)->getValue() : NULL);
+          $new_values       = (!$node->get($field_name)->isEmpty           ? $node->get($field_name)->getValue()           : NULL);
+          $field_options    = (isset($field_data['options'])               ? $field_data['options']                        : NULL);
+
+          // Check field matching options to see if this value is needed.
+          $match_old = TRUE;
+          $match_new = TRUE;
+
+          if (isset($field_options['match_field'])) {
+            $match_field           = $field_options['match_field'];
+            $match_field_value_old = $node->original->get($match_field)->getValue();
+            $match_field_value_new = $node->get($match_field)->getValue();
+            $match_value           = $field_options['match_value'];
+
+            if ($match_value != $match_field_value_old[0]['value']) {
+              $match_old = FALSE;
+            }
+            if ($match_value != $match_field_value_new[0]['value']) {
+              $match_new = FALSE;
+            }
+          }
+
+          // Get field options set in custom_activity.active_fields.yml.
+          $option_prefix = (isset($field_options['prefix']) ? $field_options['prefix'] : "");
+          $option_suffix = (isset($field_options['suffix']) ? $field_options['suffix'] : "");
+
+          $prefix = $option_prefix . $field_prefix;
+          $suffix = $field_suffix . $option_suffix;
+
+          switch ($field_type) {
+            case 'entity_reference' :
+              $this_old_value = "";
+
+              // This is a generic case, which handles different entity types.
+              if (!$node->original->get($field_name)->isEmpty()) {
+                foreach ($node->original->$field_name as $reference) {
+                  $entity_old  = $reference->entity;
+                  $entity_type = $entity_old->getEntityTypeId();
+
+                  switch ($entity_type) {
+                    case "taxonomy_term" :
+                      if ($entity_old->hasField('field_short_name')) {
+                        $this_old_value .= "{$prefix}{$entity_old->get('field_short_name')->value}{$suffix}<br />";
+                      } else {
+                        $this_old_value .= "{$prefix}{$entity_old->getName()}{$suffix}";
+                      }
+                      break;
+                    case "node" :
+                      $this_old_value .= "{$prefix}{$entity_old->getTitle()}{$suffix}";
+                      break;
+                    case "user" :
+                      $this_old_value .= "{$prefix}{$entity_old->getAccountName()}{$suffix}";
+                      break;
+                  }
+                }
+              }
+
+              if ($match_old) {
+                $old_value_string .= $this_old_value;
+              }
+
+              $this_new_value = "";
+
+              if (!$node->get($field_name)->isEmpty()) {
+                foreach ($node->$field_name as $reference) {
+                  $entity_new = $reference->entity;
+                  $entity_type = $entity_new->getEntityTypeId();
+
+                  switch ($entity_type) {
+                    case "taxonomy_term" :
+                      if ($entity_new->hasField('field_short_name')) {
+                        $this_new_value .= "{$prefix}{$entity_new->get('field_short_name')->value}{$suffix}<br />";
+                      } else {
+                        $this_new_value .= "{$prefix}{$entity_new->getName()}{$suffix}";
+                      }
+                      break;
+                    case "node" :
+                      $this_new_value .= "{$prefix}{$entity_new->getTitle()}{$suffix}";
+                      break;
+                    case "user" :
+                      $this_new_value .= "{$prefix}{$entity_new->getAccountName()}{$suffix}";
+                      break;
+                  }
+                }
+              }
+
+              if ($match_new) {
+                $new_value_string .= $this_new_value;
+              }
+              break;
+
+            case 'field_collection' :
+              // Change $new_value array to match the format of $old_values.
+              if ($new_values) {
+                $new = [];
+
+                foreach ($new_values as $value) {
+                  $new[] = [
+                    'value' => $value['value'],
+                    'revision_id' => $value['revision_id'],
+                  ];
+                }
+
+                $new_values = $new;
+              }
+
+              $this_old_value = "";
+              $this_new_value = "";
+
+              // Build the string for old values.
+              if ($old_values) {
+                // In this instance we only need the top value.
+                $entity_id = $old_values[0]['value'];
+                $old_item  = FieldCollectionItem::load($entity_id);
+
+                if ($field_name == "field_delivery_locations") {
+                  if (isset($changed_fields_store[$field_name][$entity_id]['field_delivery_location']['old_value'][0])) {
+                    $this_old_value .= "{$prefix}{$changed_fields_store[$field_name][$entity_id]['field_delivery_location']['old_value'][0]['value']}{$suffix}";
+                  } elseif (isset($old_item->get('field_delivery_location')->getValue()[0])) {
+                    $this_old_value .= "{$prefix}{$old_item->get('field_delivery_location')->getValue()[0]['value']}{$suffix}";
+                  }
+
+                  if ($match_old) {
+                    $old_value_string .= $this_old_value;
+                  }
+                } else {
+                  // Get a list of valid fields
+                  $old_fields          = $old_item->getFieldDefinitions();
+                  $old_fields_filtered = [];
+
+                  foreach ($old_fields as $key => $value) {
+                    if ((strpos($key, 'field_') === 0)
+                    &&  ($key != "field_name")) {
+                      $old_fields_filtered[$key] = $value;
+                    }
+                  }
+
+                  foreach ($old_fields_filtered as $item_field_name => $item_field) {
+                    // If we have changes stored, use those values.
+                    // If there are no changes, use existing field values.
+                    if (isset($changed_fields_store[$field_name][$entity_id][$item_field_name]['old_value'][0])) {
+                      $this_old_value .= "{$prefix}{$changed_fields_store[$field_name][$entity_id][$item_field_name]['old_value'][0]['value']}{$suffix}";
+                    } elseif (isset($old_item->get($item_field_name)->getValue()[0])) {
+                      $this_old_value .= "{$prefix}{$old_item->get($item_field_name)->getValue()[0]['value']}{$suffix}";
+                    }
+
+                    if ($match_old) {
+                      $old_value_string .= $this_old_value;
+                    }
+                  }
+                }
+              }
+
+              if ($new_values) {
+                $entity_id = $new_values[0]['value'];
+                $new_item  = FieldCollectionItem::load($entity_id);
+
+                if ($field_name == "field_delivery_locations") {
+                  if (isset($changed_fields_store[$field_name][$entity_id]['field_delivery_location']['new_value'][0])) {
+                    $this_new_value .= "{$prefix}{$changed_fields_store[$field_name][$entity_id]['field_delivery_location']['new_value'][0]['value']}{$suffix}";
+                  } elseif (isset($new_item->get('field_delivery_location')->getValue()[0])) {
+                    $this_new_value .= "{$prefix}{$new_item->get('field_delivery_location')->getValue()[0]['value']}{$suffix}";
+                  }
+
+                  if ($match_new) {
+                    $new_value_string .= $this_new_value;
+                  }
+                } else {
+                  // Get a list of valid fields
+                  $new_fields          = $new_item->getFieldDefinitions();
+                  $new_fields_filtered = [];
+
+                  foreach ($new_fields as $key => $value) {
+                    if ((strpos($key, 'field_') === 0)
+                    &&  ($key != "field_name")) {
+                      $new_fields_filtered[$key] = $value;
+                    }
+                  }
+
+                  foreach ($new_fields_filtered as $item_field_name => $item_field) {
+                    if (isset($changed_fields_store[$field_name][$entity_id][$item_field_name]['new_value'][0])) {
+                      $this_new_value .= "{$prefix}{$changed_fields_store[$field_name][$entity_id][$item_field_name]['new_value'][0]['value']}{$suffix}";
+                    } elseif (isset($new_item->get($item_field_name)->getValue()[0])) {
+                      $this_new_value .= "{$prefix}{$new_item->get($item_field_name)->getValue()[0]['value']}{$suffix}";
+                    }
+
+                    if ($match_new) {
+                      $new_value_string .= $this_new_value;
+                    }
+                  }
+                }
+              }
+              break;
+
+            case 'decimal' :
+              $scale = (isset($field_settings['scale']) ? $field_settings['scale'] : 0);
+
+              $this_old_value = "";
+              $this_new_value = "";
+
+              if ($old_values) {
+                foreach ($old_values as $old_value) {
+                  if (isset($old_value['value'])) {
+                    $old_value['value'] = number_format((float) $old_value['value'], $scale, '.', '');
+                    $this_old_value .= "{$prefix}{$old_value['value']}{$suffix}";
+                  }
+                }
+
+                if ($match_old) {
+                  $old_value_string .= $this_old_value;
+                }
+              }
+
+              if ($new_values) {
+                foreach ($new_values as $new_value) {
+                  $new_value['value'] = number_format((float)$new_value['value'], $scale, '.', '');
+                  $this_new_value .= "{$prefix}{$new_value['value']}{$suffix}";
+                }
+                if ($match_new) {
+                  $new_value_string .= $this_new_value;
+                }
+              }
+              break;
+
+            default :     //For all unspecified field types
+              $this_old_value = "";
+              $this_new_value = "";
+
+              if ($old_values) {
+                foreach ($old_values as $old_value) {
+                  $this_old_value .= "{$prefix}{$old_value['value']}{$suffix}";
+                }
+
+                if ($match_old) {
+                  $old_value_string .= $this_old_value;
+                }
+              }
+
+              if ($new_values) {
+                foreach ($new_values as $new_value) {
+                  $this_new_value .= "{$prefix}{$new_value['value']}{$suffix}";
+                }
+                if ($match_new) {
+                  $new_value_string .= $this_new_value;
+                }
+              }
+          }
+        }
+
+        $old_value_string .= "<br />";
+        $new_value_string .= "<br />";
+
+        if ($old_value_string != $new_value_string) {
+          $changed_fields[$node->id()][$combine_name] = [
+            "field_name"  => $combine_name,
+            "field_label" => $combine_field_label,
+            "old_value"   => $old_value_string,
+            "new_value"   => $new_value_string,
+          ];
+        }
+      }
+    }
+
+    $activity = \Drupal::service('custom_activity.log_activity');
+
+    // If there are no changes, don't log activity.
+    if (!empty($changed_fields))  {
+      $options = [
+        "node"           => $node,
+        "changed_fields" => $changed_fields,
+      ];
+
+      $activity->log_activity('FieldEdit', $options);
+    }
+  }
+
+  switch ($node_type) {
+    case 'container' :
+      // Activity: Container added to inventory.
+      // Log activity for this action in custom_activity.
+      // Triggered when field_inventory_date is filled.
+      if (($node->original->get('field_in_inventory')->value == 0)
+      &&  ($node->get('field_in_inventory')->value != 0)) {
+        $activity = \Drupal::service('custom_activity.log_activity');
+        $options  = ["node" => $node];
+        $activity->log_activity('ContainerAddedToInventory', $options);
+      }
+      break;
+  }
+}
+
+
+/**
+ * Implements hook_entity_update().
+ */
+function custom_activity_entity_update(EntityInterface $entity) {
+
+  if ($entity->getEntityTypeId() != "field_collection_item")  { return; }
+  if ($entity->toArray() == $entity->original->toArray())     { return; }
+
+  $tempstore    = \Drupal::service('user.private_tempstore')->get('custom_activity');
+  $parent_field = $entity->bundle();
+
+  // Get a list of fields for this entity
+  $entity_fields  = \Drupal::service('entity_field.manager')->getFieldDefinitions($entity->getEntityTypeId(), $parent_field);
+  $changed_fields = $tempstore->get('changed_fields');
+
+  // For field collections, get values for all collected fields.
+  // Create the $changed_fields array.
+  // Store the array for use in custom_activity_node_update.
+  foreach ($entity_fields as $field_name => $field) {
+    if ((strpos($field_name, "field_") === 0) && ($field_name != "field_name")) {
+      $old_value   = $entity->original->get($field_name)->getValue();
+      $new_value   = $entity->get($field_name)->getValue();
+      $field_label = $entity->get($field_name)->getFieldDefinition()->getLabel();
+
+      $changed_fields[$parent_field][$entity->id()][$field_name] = [
+        "field_name"  => $field_name,
+        "field_label" => $field_label,
+        "old_value"   => $old_value,
+        "new_value"   => $new_value,
+      ];
+    }
+  }
+
+  $tempstore->set('changed_fields', $changed_fields);
+}
+
+
+/**
+ * Implements hook_entity_insert().
+ */
+function custom_activity_entity_insert(EntityInterface $entity) {
+
+  if ($entity->getEntityTypeId() != "field_collection_item")  { return; }
+
+  $parent_field = $entity->bundle();
+
+  $tempstore      = \Drupal::service('user.private_tempstore')->get('custom_activity');
+  $changed_fields = $tempstore->get('changed_fields');
+
+  // Get a list of fields for this entity.
+  $entity_fields = \Drupal::service('entity_field.manager')->getFieldDefinitions($entity->getEntityTypeId(), $entity->bundle());
+
+  foreach ($entity_fields as $field_name => $field) {
+    if (strpos($field_name, "field_") === 0) {
+      $new_value   = $entity->get($field_name)->getValue();
+      $field_label = $entity->get($field_name)->getFieldDefinition()->getLabel();
+
+      $changed_fields[$parent_field][$entity->id()][$field_name] = [
+        "field_name"  => $field_name,
+        "field_label" => $field_label,
+        "old_value"   => NULL,
+        "new_value"   => $new_value,
+      ];
+    }
+  }
+
+  $tempstore->set('changed_fields', $changed_fields);
+}

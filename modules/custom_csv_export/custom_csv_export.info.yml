@@ -1,0 +1,7 @@
+name: custom CSV Export
+type: module
+description: Adds functionality for exporting views in CSV format.
+package: custom
+version: 8.x-1.0
+core: 8.x
+project: custom

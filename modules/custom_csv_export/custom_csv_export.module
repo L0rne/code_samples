@@ -1,0 +1,222 @@
+<?php
+
+/**
+ * @file
+ * Contains custom_csv_export.module.
+ */
+
+use Drupal\Core\Url;
+
+
+/**
+ * Implements hook_menu_local_tasks_alter()
+ *
+ * Adds custom local menu tabs for CSV Export views.
+ */
+function custom_csv_export_menu_local_tasks_alter(&$data, $route_name) {
+  $account = \Drupal::currentUser();
+  $roles   = $account->getRoles();
+  $links   = [];
+
+  switch ($route_name) {
+    // Detail pages
+    case "entity.node.canonical" :
+      if (in_array('customer', $roles)) {
+        $node = \Drupal::routeMatch()->getParameter('node');
+
+        switch ($node->getType()) {
+          case 'sales_contract' :
+            $links['view.customer_sc_containers_export.sc_containers_export'] = [
+              'url'   => Url::fromUri('internal:/export/customer/sc-containers/' . $node->id(), ['query' => ['_format' => 'csv']]),
+              'title' => t('Export SC Containers in CSV format'),
+            ];
+            break;
+        }
+      }
+      break;
+
+    // Customers
+    case 'view.customers.customers' :
+      $links['view.customers.customers_export'] = [
+        'url'   => Url::fromUri('internal:/export/customers', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Customers in CSV format'),
+      ];
+      break;
+
+    // Purchasing Debit/Credit Notes
+    case 'view.debit_credit_notes.purchasing_notes_active' :
+      $links['view.debit_credit_notes.purchasing_notes_export'] = [
+        'url' => Url::fromUri('internal:/export/purchasing-notes', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Debit/Credit Notes in CSV format'),
+      ];
+      break;
+    case 'view.debit_credit_notes.purchasing_notes_archive' :
+      $links['custom_csv_export.purchasing_archive'] = [
+        'url' => Url::fromUri('internal:/purchasing/notes/archive/export'),
+        'title' => t('Export Debit/Credit Notes in CSV format'),
+      ];
+      break;
+
+    // Sales Debit/Credit Notes
+    case 'view.debit_credit_notes.sales_notes_active' :
+      $links['view.debit_credit_notes.sales_notes_export'] = [
+        'url' => Url::fromUri('internal:/export/sales-notes', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Debit/Credit Notes in CSV format'),
+      ];
+      break;
+    case 'view.debit_credit_notes.sales_notes_archive' :
+      $links['custom_csv_export.sales_archive'] = [
+        'url' => Url::fromUri('internal:/sales/notes/archive/export'),
+        'title' => t('Export Debit/Credit Notes in CSV format'),
+      ];
+      break;
+
+    // The export for inventory goes to "containers" so as not to conflict
+    // with the Inventory Export on the Dashboard.
+    case 'view.inventory.inventory_active' :
+      $links['view.inventory.containers_export'] = [
+        'url' => Url::fromUri('internal:/export/containers', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Containers in CSV format'),
+      ];
+      break;
+    case 'view.inventory.inventory_archive' :
+      $links['custom_csv_export.inventory_archive'] = [
+        'url' => Url::fromUri('internal:/inventory/archive/export'),
+        'title' => t('Export Containers in CSV format'),
+      ];
+      break;
+
+    // Export of Inventory "containers" for customers.
+    case 'view.inventory.inventory_customer_active' :
+      $links['view.inventory.containers_customer_export'] = [
+        'url' => Url::fromUri('internal:/export/customer/containers'),
+        'title' => t('Export Containers in CSV format'),
+      ];
+      break;
+    case 'view.inventory.inventory_customer_archive' :
+      $links['view.inventory.inventory_customer_archive'] = [
+        'url' => Url::fromUri('internal:/export/customer/container/archive'),
+        'title' => t('Export Containers in CSV format'),
+      ];
+      break;
+
+    // Invoices
+    case 'view.invoices.invoices_active' :
+      $links['view.invoices.invoices_export'] = [
+        'url' => Url::fromUri('internal:/export/invoices', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Invoices in CSV format'),
+      ];
+      break;
+    case 'view.invoices.invoices_archive' :
+      $links['custom_csv_export.sales_archive'] = [
+        'url' => Url::fromUri('internal:/sales/invoicing/archive/export'),
+        'title' => t('Export Invoices in CSV format'),
+      ];
+      break;
+
+    // Purchase Contracts
+    case 'view.purchase_contracts.purchase_contracts_active' :
+      $links['view.purchase_contracts.purchase_contracts_export'] = [
+        'url' => Url::fromUri('internal:/export/purchase-contracts', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Purchase Contracts in CSV format'),
+      ];
+      break;
+    case 'view.purchase_contracts.purchase_contracts_archive' :
+      $links['custom_csv_export.purchasing_archive'] = [
+        'url' => Url::fromUri('internal:/purchasing/contracts/archive/export'),
+        'title' => t('Export Purchase Contracts in CSV format'),
+      ];
+      break;
+
+    // Releases
+    case 'view.releases.releases_active' :
+      $links['view.releases.releases_export'] = [
+        'url' => Url::fromUri('internal:/export/releases', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Releases in CSV format'),
+      ];
+      break;
+    case 'view.releases.releases_archive' :
+      $links['custom_csv_export.sales_archive'] = [
+        'url' => Url::fromUri('internal:/sales/releases/archive/export'),
+        'title' => t('Export Releases in CSV format'),
+      ];
+      break;
+
+    // Sales Contracts
+    case 'view.sales_contracts.sales_contracts_active' :
+      $links['view.sales_contracts.sales_contracts_export'] = [
+        'url' => Url::fromUri('internal:/export/sales-contracts', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Sales Contracts in CSV format'),
+      ];
+      break;
+    case 'view.sales_contracts.sales_contracts_archive' :
+      $links['custom_csv_export.sales_archive'] = [
+        'url' => Url::fromUri('internal:/sales/contracts/archive/export'),
+        'title' => t('Export Sales Contracts in CSV format'),
+      ];
+      break;
+
+    // Sales Contracts for Customers
+    case 'view.sales_contracts.sales_contracts_customer_active' :
+      $links['view.sales_contracts.sales_contracts_customer_export'] = [
+        'url' => Url::fromUri('internal:/export/customer/sales-contracts', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Sales Contracts in CSV format'),
+      ];
+      break;
+
+    // Shipments
+    case 'view.shipments.shipments_active' :
+      $links['view.shipments.shipments_export'] = [
+        'url' => Url::fromUri('internal:/export/shipments', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Shipments in CSV format'),
+      ];
+      break;
+    case 'view.shipments.shipments_archive' :
+      $links['custom_csv_export.shipping_archive'] = [
+        'url' => Url::fromUri('internal:/shipping/archive/export'),
+        'title' => t('Export Shipments in CSV format'),
+      ];
+      break;
+
+    // Suppliers
+    case 'view.suppliers.suppliers' :
+      $links['view.suppliers.suppliers_export'] = [
+        'url' => Url::fromUri('internal:/export/suppliers', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Suppliers in CSV format'),
+      ];
+      break;
+
+    // Truckers
+    case 'view.truckers.truckers' :
+      $links['view.truckers.truckers_export'] = [
+        'url' => Url::fromUri('internal:/export/truckers', ['query' => ['_format' => 'csv']]),
+        'title' => t('Export Truckers in CSV format'),
+      ];
+      break;
+  }
+
+  if (empty($data['tabs'])) {                //If only one tab, Drupal doesn't show it;
+    $data['tabs'][0]['placeholder'] = [];    //This will make the tab below appear as desired
+  }
+
+  foreach ($links as $route => $link_data) {
+    $url = $link_data['url'];
+    $url->setRouteParameters((array_merge($url->getRouteParameters(), $_GET)));
+
+    $data['tabs'][0][$route] = [
+      '#theme' => 'menu_local_task',
+      '#link' => [
+        'title' => $link_data['title'],
+        'url' => $url,
+        'localized_options' => [
+          'attributes' => [
+            'title' => $link_data['title'],
+            'class' => 'local-task-export tooltip',
+          ],
+        ],
+      ],
+      '#weight' => 25,
+      '#active' => FALSE,
+    ];
+  }
+}

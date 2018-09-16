@@ -1,0 +1,39 @@
+{#
+/**
+ * @file
+ * Theme override for a single field in a node template.
+ *
+ * Available variables:
+ * - attributes: An array of attributes (including classes).
+ * - bundle: The bundle the field belongs to (ex: container).
+ * - element: An array of information about the field.
+ * - field_name: The machine name of the field.
+ * - field_type: The type of field (ex: string).
+ * - label: The label of the field.
+ * - multiple: Boolean value indicating if the field has multiple values.
+ * - items: An array of field items.
+ * - user: User object for the current user.
+ *
+ * Added by preprocess functions in custom.theme:
+ * - is_editable: TRUE/FALSE.
+ * - inline_edit_form: The field value along with the edit form.
+ */
+#}
+
+{% set classes = [] %}
+
+{% set attributes = attributes.addClass(classes) %}
+
+{% set title_attributes = title_attributes.addClass(label_display == 'visually_hidden' ? 'visually-hidden') %}
+
+{% if multiple %}
+  <div{{ attributes }}>
+    {% for item in items %}
+      <div{{ item.attributes }}>{% if is_editable %}{{ inline_edit_form }} {% else %}{{ item.content }}{% endif %}</div>
+    {% endfor %}
+  </div>
+{% else %}
+  {% for item in items %}
+    <div{{ attributes }}>{% if is_editable %}{{ inline_edit_form }} {% else %}{{ item.content }}{% endif %}</div>
+  {% endfor %}
+{% endif %}
